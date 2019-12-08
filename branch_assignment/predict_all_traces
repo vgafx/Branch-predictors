@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Add your own predictors to this list.
+PRED_NAMES=( always_true always_false random ass1 ass2 ass3 ass4 bonus)
+PRED_OPTIONS=( -t -f -r -1 -2 -3 -4 -5)
+
+# Create results directory
+mkdir -p results
+
+for FILE in `ls traces/*.gz`
+do
+  TRACENAME=`basename $FILE .gz`
+  FILENAME=traces/$TRACENAME.trace
+  gunzip -c $FILE > $FILENAME
+  for ((P_NUM=0; P_NUM<${#PRED_NAMES[*]}; P_NUM++))
+  do
+    PRED_NAME=${PRED_NAMES[$P_NUM]} 
+    PRED_OPTION=${PRED_OPTIONS[$P_NUM]}
+    ./predictor -i $FILENAME $PRED_OPTION -s
+    ./predictor -i $FILENAME $PRED_OPTION -b > results/$TRACENAME-$PRED_NAME-basic.txt
+    ./predictor -i $FILENAME $PRED_OPTION -a > results/$TRACENAME-$PRED_NAME-advanced.txt
+  done
+  rm $FILENAME
+done
+

@@ -1,0 +1,39 @@
+CC = gcc
+CFLAGS = -std=c99 -O -Wall -D_POSIX_C_SOURCE=200809L -g
+TRACE = sample
+ARGS = -r -s
+
+all: predictor
+
+framework.o: framework.c framework.h
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+predictors.o: predictors.c predictors.h
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+main.o: main.c framework.h predictors.h
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+predictor: main.o framework.o predictors.o
+	$(CC) -o $@ $^ -lm
+
+$(TRACE).trace:
+	gunzip -c traces/$(TRACE).gz -c > $@
+
+runtest: predictor $(TRACE).trace
+	./predictor -i $(TRACE).trace $(ARGS)
+
+runall: predictor predict_all_traces
+	./predict_all_traces
+clean:
+	rm -rf *.o predictor *.trace traces/*.trace
+
+tarball: guard-STUDID
+	tar -c --transform 's,^,$(STUDID)/,' -zvf $(STUDID).tar.gz framework.c framework.h predictors.c predictors.h  main.c Branch_Predictors_Lab_Report.pdf Makefile
+
+guard-STUDID:
+	@ if [ "${STUDID}" == "" ]; then \
+		echo "Environment variable $* not set"; \
+		echo "Run with: STUDID=<your student id> make tarball"; \
+        exit 1; \
+	fi
